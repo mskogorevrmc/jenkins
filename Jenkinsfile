@@ -1,4 +1,16 @@
-#!groovy?
+#!groovy
+
+def COLOR_MAP = [
+    'SUCCESS': 'good', 
+    'FAILURE': 'danger',
+]
+
+def getBuildUser() {
+    return currentBuild.rawBuild.getCause(Cause.UserIdCause).getUserId()
+}
+
+
+@Library('jenkins-utils-lib') _
 pipeline {
     options {
         disableConcurrentBuilds()
@@ -46,12 +58,36 @@ pipeline {
     post {
         always {
             cleanWs()
+            script {
+                BUILD_USER = getBuildUser()
+                slackSend(
+                    color: COLOR_MAP[currentBuild.currentResult],
+                    message: "*${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${BUILD_USER}>\n Build commit: ${GIT_COMMIT}\n More info at: ${env.BUILD_URL}\n Time: ${currentBuild.durationString.minus(' and counting')}",
+                    channel: 'rmc_jenkins_ci',
+                    tokenCredentialId: 'RMCSlackToken'
+                )
+            }
         }
     }
 }
 
-slackSend botUser: true, 
-  channel: 'rmc_jenkins_ci', 
-  color: '#00ff00', 
-  message: 'Testing Jekins with Slack', 
-  tokenCredentialId: 'xoxb-49626827319-1663186210161-7hMrTj96WtoQLGEcd6p9RJsF'
+def notifySlack(String buildStatus = 'STARTED') {
+    // Build status of null means success.
+    buildStatus = buildStatus ?: 'SUCCESS'
+
+    def color
+
+    if (buildStatus == 'STARTED') {
+        color = '#D4DADF'
+    } else if (buildStatus == 'SUCCESS') {
+        color = '#BDFFC3'
+    } else if (buildStatus == 'UNSTABLE') {
+        color = '#FFFE89'
+    } else {
+        color = '#FF9FA1'
+    }
+
+    def msg = "${buildStatus}: `${env.JOB_NAME}` #${env.BUILD_NUMBER}:\n${env.BUILD_URL}"
+
+    slackSend(color: color, message: msg, channel: 'rmc_jenkins_ci', tokenCredentialId: 'RMCSlackToken')
+}
