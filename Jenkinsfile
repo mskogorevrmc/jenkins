@@ -62,7 +62,7 @@ pipeline {
                 BUILD_USER = getBuildUser()
                 slackSend(
                     color: COLOR_MAP[currentBuild.currentResult],
-                    message: "*${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${BUILD_USER}>\n Build commit: ${GIT_COMMIT}\n More info at: ${env.BUILD_URL}\n Time: ${currentBuild.durationString.minus(' and counting')}",
+                    message: "*${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${BUILD_USER}>\n Build commit: ${GIT_COMMIT}\n More info at: ${env.BUILD_URL}\n Time: ${currentBuild.durationString.minus(' and counting')}\n ${GIT_AUTHOR_NAME}",
                     channel: 'rmc_jenkins_ci',
                     tokenCredentialId: 'RMCSlackToken'
                 )
