@@ -47,6 +47,7 @@ pipeline {
         stage('Running smoke tests') {
             steps {
                 echo 'Run tests'
+                sh ''' echo 1'''
             }
         }
         stage('Notification') {
