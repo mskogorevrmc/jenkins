@@ -1,16 +1,5 @@
 #!groovy
 
-def COLOR_MAP = [
-    'SUCCESS': 'good', 
-    'FAILURE': 'danger',
-]
-
-def getBuildUser() {
-    return currentBuild.rawBuild.getCause(Cause.UserIdCause).getUserId()
-}
-
-
-@Library('jenkins-utils-lib') _
 pipeline {
     options {
         disableConcurrentBuilds()
@@ -47,7 +36,7 @@ pipeline {
         stage('Running smoke tests') {
             steps {
                 echo 'Run tests'
-                sh ''' echo 1'''
+                sh ''' echo 1sssss'''
             }
         }
         stage('Notification') {
@@ -58,12 +47,15 @@ pipeline {
     }
     post {
         always {
-            cleanWs()
             script {
-                BUILD_USER = getBuildUser()
+                sh """
+                    echo ${GIT_COMMIT}
+                """
+                env.GIT_COMMIT_MSG = sh (script: 'git log -1 --pretty=%B ${GIT_COMMIT}', returnStdout: true).trim()
+                env.GIT_AUTHOR = sh (script: 'git log -1 --pretty=%ae ${GIT_COMMIT} | awk -F "@" \'{print $1}\'', returnStdout: true).trim()
                 slackSend(
-                    color: COLOR_MAP[currentBuild.currentResult],
-                    message: "*${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${BUILD_USER}>\n Build commit: ${GIT_COMMIT}\n More info at: ${env.BUILD_URL}\n Time: ${currentBuild.durationString.minus(' and counting')}",
+                    color: color_slack_msg(),
+                    message: "*${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${env.GIT_AUTHOR}>\n Build commit: ${GIT_COMMIT}\n Last commit message: '${env.GIT_COMMIT_MSG}'\n More info at: ${env.BUILD_URL}\n Time: ${currentBuild.durationString.minus(' and counting')}",
                     channel: 'rmc_jenkins_ci',
                     tokenCredentialId: 'RMCSlackToken'
                 )
@@ -72,23 +64,13 @@ pipeline {
     }
 }
 
-def notifySlack(String buildStatus = 'STARTED') {
-    // Build status of null means success.
-    buildStatus = buildStatus ?: 'SUCCESS'
 
-    def color
-
-    if (buildStatus == 'STARTED') {
-        color = '#D4DADF'
-    } else if (buildStatus == 'SUCCESS') {
-        color = '#BDFFC3'
-    } else if (buildStatus == 'UNSTABLE') {
-        color = '#FFFE89'
-    } else {
-        color = '#FF9FA1'
-    }
-
-    def msg = "${buildStatus}: `${env.JOB_NAME}` #${env.BUILD_NUMBER}:\n${env.BUILD_URL}"
-
-    slackSend(color: color, message: msg, channel: 'rmc_jenkins_ci', tokenCredentialId: 'RMCSlackToken')
+def color_slack_msg() {
+    def COLOR_MAP = [
+        'SUCCESS': 'good', 
+        'FAILURE': 'danger',
+    ]
+    return COLOR_MAP[currentBuild.currentResult]
 }
+
+
