@@ -36,7 +36,7 @@ pipeline {
         stage('Running smoke tests') {
             steps {
                 echo 'Run tests'
-                sh ''' echo 1sssss'''
+                sh ''' exit 2 '''
             }
         }
         stage('Notification') {
@@ -54,7 +54,8 @@ pipeline {
                 env.GIT_COMMIT_MSG = sh (script: 'git log -1 --pretty=%B ${GIT_COMMIT}', returnStdout: true).trim()
                 env.GIT_AUTHOR = sh (script: 'git log -1 --pretty=%ae ${GIT_COMMIT} | awk -F "@" \'{print $1}\'', returnStdout: true).trim()
                 slackSend(
-                    message: """\
+                    color: color_slack_msg(),
+                    message: """
                       *${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${env.GIT_AUTHOR}>
                       Build commit: ${GIT_COMMIT}
                       Last commit message: '${env.GIT_COMMIT_MSG}'
@@ -66,5 +67,22 @@ pipeline {
                 )
             }
         }
+    }
+}
+
+def color_slack_msg() {
+    switch(currentBuild.currentResult) {
+    case "SUCCESS":
+        return "good"
+        break
+    case "FAILURE":
+        return "danger"
+        break
+    case "UNSTABLE":
+        return "danger"
+        break
+    default:
+        return "warning"
+        break
     }
 }
