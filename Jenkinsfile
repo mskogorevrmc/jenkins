@@ -36,7 +36,7 @@ pipeline {
         stage('Running smoke tests') {
             steps {
                 echo 'Run tests'
-                sh ''' echo 1sssss; echo 123'''
+                sh ''' echo 1sssss; echo 12333333'''
             }
         }
         stage('Notification') {
