@@ -55,7 +55,13 @@ pipeline {
                 env.GIT_AUTHOR = sh (script: 'git log -1 --pretty=%ae ${GIT_COMMIT} | awk -F "@" \'{print $1}\'', returnStdout: true).trim()
                 slackSend(
                     color: color_slack_msg(),
-                    message: "*${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${env.GIT_AUTHOR}>\n Build commit: ${GIT_COMMIT}\n Last commit message: '${env.GIT_COMMIT_MSG}'\n More info at: ${env.BUILD_URL}\n Time: ${currentBuild.durationString.minus(' and counting')}",
+                    message: """
+                      *${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${env.GIT_AUTHOR}>
+                      Build commit: ${GIT_COMMIT}
+                      Last commit message: '${env.GIT_COMMIT_MSG}'
+                      More info at: ${env.BUILD_URL}
+                      Time: ${currentBuild.durationString.minus(' and counting')}
+                    """.stripIndent(),
                     channel: 'rmc_jenkins_ci',
                     tokenCredentialId: 'RMCSlackToken'
                 )
@@ -64,13 +70,19 @@ pipeline {
     }
 }
 
-
 def color_slack_msg() {
-    def COLOR_MAP = [
-        'SUCCESS': 'good', 
-        'FAILURE': 'danger',
-    ]
-    return COLOR_MAP[currentBuild.currentResult]
+    switch(currentBuild.currentResult) {
+    case "SUCCESS":
+        return "good"
+        break
+    case "FAILURE":
+        return "danger"
+        break
+    case "UNSTABLE":
+        return "danger"
+        break
+    default:
+        return "warning"
+        break
+    }
 }
-
-
