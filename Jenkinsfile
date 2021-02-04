@@ -54,7 +54,6 @@ pipeline {
                 env.GIT_COMMIT_MSG = sh (script: 'git log -1 --pretty=%B ${GIT_COMMIT}', returnStdout: true).trim()
                 env.GIT_AUTHOR = sh (script: 'git log -1 --pretty=%ae ${GIT_COMMIT} | awk -F "@" \'{print $1}\'', returnStdout: true).trim()
                 slackSend(
-                    color: color_slack_msg(),
                     message: """\
                       *${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${env.GIT_AUTHOR}>
                       Build commit: ${GIT_COMMIT}
@@ -68,13 +67,4 @@ pipeline {
             }
         }
     }
-}
-
-
-def color_slack_msg() {
-    def COLOR_MAP = [
-        'SUCCESS': 'good', 
-        'FAILURE': 'danger',
-    ]
-    return COLOR_MAP[currentBuild.currentResult]
 }
