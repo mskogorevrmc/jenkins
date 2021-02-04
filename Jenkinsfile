@@ -36,7 +36,6 @@ pipeline {
         stage('Running smoke tests') {
             steps {
                 echo 'Run tests'
-                sh ''' exit 2 '''
             }
         }
         stage('Notification') {
@@ -51,17 +50,17 @@ pipeline {
                 sh """
                     echo ${GIT_COMMIT}
                 """
-                env.GIT_COMMIT_MSG = sh (script: 'git log -1 --pretty=%B ${GIT_COMMIT}', returnStdout: true).trim()
+                env.GIT_COMMIT_MSG = sh (script: 'git log -1 --pretty=%B ${GIT_COMMIT} | head -n1', returnStdout: true).stripIndent().trim()
                 env.GIT_AUTHOR = sh (script: 'git log -1 --pretty=%ae ${GIT_COMMIT} | awk -F "@" \'{print $1}\'', returnStdout: true).trim()
                 slackSend(
                     color: color_slack_msg(),
                     message: """
-                      *${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${env.GIT_AUTHOR}>
-                      Build commit: ${GIT_COMMIT}
-                      Last commit message: '${env.GIT_COMMIT_MSG}'
-                      More info at: ${env.BUILD_URL}
-                      Time: ${currentBuild.durationString.minus(' and counting')}
-                    """.stripIndent(),
+                        *${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${env.GIT_AUTHOR}>
+                        Build commit: ${GIT_COMMIT}
+                        Last commit message: '${env.GIT_COMMIT_MSG}'
+                        More info at: ${env.BUILD_URL}
+                        Time: ${currentBuild.durationString.minus(' and counting')}
+                        """.stripIndent().trim(),
                     channel: 'rmc_jenkins_ci',
                     tokenCredentialId: 'RMCSlackToken'
                 )
