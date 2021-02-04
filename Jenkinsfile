@@ -60,7 +60,7 @@ pipeline {
                       Last commit message: '${env.GIT_COMMIT_MSG}'
                       More info at: ${env.BUILD_URL}
                       Time: ${currentBuild.durationString.minus(' and counting')}
-                    """,
+                    """.stripIndent(),
                     channel: 'rmc_jenkins_ci',
                     tokenCredentialId: 'RMCSlackToken'
                 )
